@@ -1,3 +1,9 @@
+package by.epamtc.client.main;
+
+import by.epamtc.client.entity.MessageType;
+import by.epamtc.informationHandle.entity.impl.Text;
+import by.epamtc.informationHandle.models.Wrapper;
+
 import java.io.*;
 import java.net.Socket;
 
@@ -6,15 +12,12 @@ public class Client {
     private static BufferedReader reader;
     private static InputStream inputStream;
     private static OutputStream outputStream;
-
     private static BufferedReader in;
     private static BufferedWriter out;
-
     private static ObjectInputStream objIn;
+    private static ObjectOutputStream objOut;
     private static final int port = 4004;
-
-    private static final String bookMess = "book";
-    private static final String stopMess = "stop";
+    private static String filename = "text.txt";
 
 
     public static void main(String[] args) {
@@ -27,27 +30,32 @@ public class Client {
                 inputStream = clientSocket.getInputStream();
                 outputStream = clientSocket.getOutputStream();
                 objIn = new ObjectInputStream(inputStream);
+                objOut = new ObjectOutputStream(outputStream);
 
                 while (true) {
                     System.out.println("Write your mess to server:");
-                    String word = reader.readLine();
-                    if (word.equals(stopMess)) {
-                        out.write(word + "\n");
-                        out.flush();
+                    String messageType = reader.readLine();
+                    if (messageType.equals(MessageType.STOP_MESSAGING)) {
+                        Wrapper wrapper = new Wrapper();
+                        wrapper.setMessageType(MessageType.STOP_MESSAGING);
+                        objOut.writeObject(wrapper);
+                        objOut.flush();
                         break;
                     }
 
-                    out.write(word + "\n");
-                    out.flush();
+                    if (messageType.equals(MessageType.FILE_OBJECT)){
+                        String path = Client.class.getClassLoader().getResource(filename).getPath();
 
-                    if (word.equals(bookMess)){
-                        Book book = (Book) objIn.readObject();
-                        System.out.println(book);
+                        Wrapper request = new Wrapper(MessageType.FILE_OBJECT, path);
+                        objOut.writeObject(request);
+                        objOut.flush();
+                        Wrapper response = (Wrapper) objIn.readObject();
+                        Text message = (Text) response.getMessage();
+                        System.out.println(message);
                     }
                     else {
                         String messageFromServer = in.readLine();
                         System.out.println(messageFromServer);
-
                     }
                 }
 
