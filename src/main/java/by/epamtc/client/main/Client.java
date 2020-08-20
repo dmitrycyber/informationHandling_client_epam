@@ -35,27 +35,8 @@ public class Client {
                 while (true) {
                     System.out.println("Write your mess to server:");
                     String messageType = reader.readLine();
-                    if (messageType.equals(MessageType.STOP_MESSAGING)) {
-                        Wrapper wrapper = new Wrapper();
-                        wrapper.setMessageType(MessageType.STOP_MESSAGING);
-                        objOut.writeObject(wrapper);
-                        objOut.flush();
+                    if (checkUserMessage(messageType)){
                         break;
-                    }
-
-                    if (messageType.equals(MessageType.FILE_OBJECT)){
-                        String path = Client.class.getClassLoader().getResource(filename).getPath();
-
-                        Wrapper request = new Wrapper(MessageType.FILE_OBJECT, path);
-                        objOut.writeObject(request);
-                        objOut.flush();
-                        Wrapper response = (Wrapper) objIn.readObject();
-                        Text message = (Text) response.getMessage();
-                        System.out.println(message);
-                    }
-                    else {
-                        String messageFromServer = in.readLine();
-                        System.out.println(messageFromServer);
                     }
                 }
 
@@ -69,6 +50,28 @@ public class Client {
         } catch (Exception e) {
             System.err.print(e);
         }
+    }
+
+    public static boolean checkUserMessage(String clientMessage) throws IOException, ClassNotFoundException {
+        if (clientMessage.equals(MessageType.STOP_MESSAGING)) {
+            Wrapper wrapper = new Wrapper();
+            wrapper.setMessageType(MessageType.STOP_MESSAGING);
+            objOut.writeObject(wrapper);
+            objOut.flush();
+            return true;
+        }
+
+        if (clientMessage.equals(MessageType.FILE_OBJECT)){
+            String path = Client.class.getClassLoader().getResource(filename).getPath();
+
+            Wrapper request = new Wrapper(MessageType.FILE_OBJECT, path);
+            objOut.writeObject(request);
+            objOut.flush();
+            Wrapper response = (Wrapper) objIn.readObject();
+            Text message = (Text) response.getMessage();
+            System.out.println(message);
+        }
+        return false;
     }
 
 }
